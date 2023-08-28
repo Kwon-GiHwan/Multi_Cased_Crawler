@@ -111,7 +111,6 @@ class Scrapper():
                 raise Exception("Param Error: scr_form")
         else:
             raise Exception("Param Error : method")
-
         try:
             if(action == 0):
                 # WebDriverWait(self.driver, 10).until(element_to_be_clickable(element))
