@@ -1,7 +1,11 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service as ChromeService
+
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
@@ -12,17 +16,22 @@ import random
 import urllib.request
 import re
 import datetime
+#https://ducj.tistory.com/157
+#https://mebadong.tistory.com/101
 
-
-class Scrapper():
+class Crawler():
     def __init__(self):
 
         # set driver as class var
 
-        self.options_driver = Options()
+        self.options_driver = webdriver.ChromeOptions()
         self.options_driver.add_argument(
             "app-version=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36 Edg/97.0.1072.62")
-        self.driver = webdriver.Chrome(executable_path='.\chromedriver.exe', options=self.options_driver)
+
+        service = ChromeService(executable_path='.\chromedriver.exe',)
+        driver = webdriver.Chrome(service=service, options=options_driver)
+
+        # self.driver = webdriver.Chrome(executable_path='.\chromedriver.exe', options=self.options_driver)
 
         self.db = db_connector.Database()
 
@@ -56,7 +65,7 @@ class Scrapper():
         """
         method :
              - 0 (element)- get an element
-             - 1 (elements) - will be supported at version 1.0
+             - 1 (elements) - get an elements
 
         scr_form :
             - 0 (id)  find element by element id
@@ -65,16 +74,21 @@ class Scrapper():
             - 3 (xpath) : find element by xpath
             - 4 (css selector) : find element by css selector
 
-        scr_form_param : parameters using at each 'find_element' method
+
+        scr_form_param : a parameters using at each 'find_element' method
             - ex) find by tag name <p> -> 'p'
 
         action :
             - 0 (click) : click() method's parameter
             - 1 (send_key) : use [send keys()] method's parameter
-            - 2 (mouse) : will be supported with version 1.0
-            - 3 (wheel) : will be supported with version 1.0
+            - 2 (mouse) : move mouse cursor to element
+            - 3 (wheel) : wheel to element
             - 4 (get text) : return current element's text
             - 5 (get_attribute) : return current element's attribute
+            #visibility_of will be added
+            #visibility_of_element_located() will be added
+            #presence_of_all_elements_located() will be added
+
 
         action_param : parameters using at each action
             - ex) using [action = 2] and [action_param = Keys.ENTER] will be [send_keys(Keys.ENTER)]
@@ -84,7 +98,7 @@ class Scrapper():
         return:
         """
 
-        wait = WebDriverWait(self.driver, 3)
+        wait = WebDriverWait(self.driver, timeout=3)
         # fluent wait
         # wait = WebDriverWait(self.driver, 10, poll_frequency=1,
         #                      ignored_exceptions=[ElementNotVisibleException, ElementNotSelectableException])
@@ -92,42 +106,74 @@ class Scrapper():
 
         if(method == 0):
             if(scr_form == 0):
-                element = wait.until(EC.presence_of_element_located((By.ID, scr_form_param)))
+                elements = [wait.until(EC.presence_of_element_located((By.ID, scr_form_param)))]
             elif(scr_form == 1):
                 # element = driver.find_element(By.CLASS_NAME, scr_form_param)
-                element = wait.until(EC.presence_of_element_located((By.CLASS_NAME, scr_form_param)))
+                elements = [wait.until(EC.presence_of_element_located((By.CLASS_NAME, scr_form_param)))]
             elif(scr_form == 2):
                 # element = driver.find_element(By.TAG_NAME, scr_form_param)
-                element = wait.until(EC.presence_of_element_located((By.TAG_NAME, scr_form_param)))
+                elements = [wait.until(EC.presence_of_element_located((By.TAG_NAME, scr_form_param)))]
             elif(scr_form == 3):
                 # element = driver.find_element(By.XPATH, scr_form_param)
-                print('waiting for...')
-                element = wait.until(EC.presence_of_element_located((By.XPATH, scr_form_param)))
+                print('waiting...')
+                elements = [wait.until(EC.presence_of_element_located((By.XPATH, scr_form_param)))]
             elif(scr_form == 4):
                 # element = driver.find_element(By.CSS_SELECTOR, scr_form_param)
-                print('waiting for...')
-                element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, scr_form_param)))
+                print('waiting...')
+                elements = [wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, scr_form_param)))]
             else:
                 raise Exception("Param Error: scr_form")
         else:
             raise Exception("Param Error : method")
+
+        if (method == 1):
+            if (scr_form == 0):
+                elements = wait.until(EC.presence_of_all_elements_located((By.ID, scr_form_param)))
+            elif (scr_form == 1):
+                # element = driver.find_element(By.CLASS_NAME, scr_form_param)
+                elements = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, scr_form_param)))
+            elif (scr_form == 2):
+                # element = driver.find_element(By.TAG_NAME, scr_form_param)
+                elements = wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, scr_form_param)))
+            elif (scr_form == 3):
+                # element = driver.find_element(By.XPATH, scr_form_param)
+                elements = wait.until(EC.presence_of_all_elements_located((By.XPATH, scr_form_param)))
+            elif (scr_form == 4):
+                # element = driver.find_element(By.CSS_SELECTOR, scr_form_param)
+                elements = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, scr_form_param)))
+            else:
+                raise Exception("Param Error: scr_form")
+        else:
+            raise Exception("Param Error : method")
+
+
+        action = ActionChains(self.driver)
+
         try:
             if(action == 0):
                 # WebDriverWait(self.driver, 10).until(element_to_be_clickable(element))
-                element.click()
+                #element.click()#check element_to_be_clickable(locator) - hover action 주기
+                for element in elements:
+                    try:
+                        element.click()
+                    except:
+                        self.driver.execute_script("arguments[0].click();", element)
             elif(action == 1):
                 # WebDriverWait(self.driver, 10).until(element_to_be_selected(element))
-                element.send_keys(action_param)
+                for element in elements:
+                    element.send_keys(action_param)
             elif(action == 2):
-                pass
+                for element in elements:
+                    action.move_to_element(element).perform()
             elif(action == 3):
-                pass
+                for element in elements:
+                    action.scroll_to_element(element).perform()
             elif(action == 4):
                 # WebDriverWait(self.driver, 10).until(EC.element_to_be_selected((element)))
-                return str(element.text)
+                return [str(element.text) for element in elements]
             elif(action== 5):
                 # WebDriverWait(self.driver, 10).until(EC.element_to_be_selected((element)))
-                return str(element.get_attribute(action_param))
+                return [str(element.get_attribute(action_param)) for element in elements]
             else:
                 raise Exception("Param Error: action, action_param")
         except:
@@ -172,7 +218,7 @@ class Scrapper():
 
 
 def main():
-    crawler = Scrapper()
+    crawler = Crawler()
     try:
         crawler.set_driver(link = "https://tradingeconomics.com/commodity/wheat")
         #https://tradingeconomics.com/commodity/wheat
